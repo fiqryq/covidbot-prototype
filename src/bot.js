@@ -1,10 +1,13 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
-
+const axios = require("axios");
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
+const url = process.env.DEV_URL;
 
+// on start bot
 bot.start((ctx) => ctx.reply("Welcome"));
 
+// menu with inline menu
 bot.command("menu", (ctx) => {
   bot.telegram.sendMessage(ctx.chat.id, "Pilih menu ", {
     reply_markup: {
@@ -33,31 +36,43 @@ bot.command("lapor", (context) => {
   let split = msg.split("#");
 
   // split array msg
-  let nama = split[1];
-  let nip = split[2];
-  let fakultas = split[3];
+  let email = split[1];
+  let nama = split[2];
+  let nip = split[3];
+  let fakultas = split[4];
 
   const payload = {
-    nama: nama,
+    email: email,
+    name: nama,
     nip: nip,
-    fakultas: fakultas,
+    faculty: fakultas,
   };
 
   const datas = `
   Berhasil submit data :
-  Nama     : ${payload.nama}
+  Email     : ${payload.email}
+  Nama     : ${payload.name}
   Nip      : ${payload.nip}
-  Fakultas : ${payload.fakultas}
+  Fakultas : ${payload.faculty}
   `;
-
-  if (payload.nama || payload.nip || payload.fakultas === undefined) {
-    bot.telegram.sendMessage(context.chat.id, "Format salah");
-  } else {
-    // do something
-    bot.telegram.sendMessage(context.chat.id, datas);
-  }
-  console.log(payload);
+  postDataLaporan(context, payload, datas);
 });
+
+async function postDataLaporan(context, payload, datas) {
+  try {
+    await axios
+      .post(`${url}/pegawai`, payload)
+      .then(function (response) {
+        console.log(response);
+        bot.telegram.sendMessage(context.chat.id, datas);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 bot.action("lapor", async (ctx) => {
   try {
