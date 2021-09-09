@@ -5,29 +5,47 @@ const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 const url = process.env.DEV_URL;
 
 // on start bot
-bot.start((ctx) => ctx.reply("Welcome"));
+bot.start((ctx) =>
+  ctx.reply(
+    "Selamat datang di bot tel-u siaga covid 19 gunakan perintah /menu untuk memilih menu"
+  )
+);
 
 // menu with inline menu
 bot.command("menu", (ctx) => {
-  bot.telegram.sendMessage(ctx.chat.id, "Pilih menu ", {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "Laporan Mandiri", callback_data: "lapor" }],
-        [
-          { text: "Status Vaksin", callback_data: "status_vaksin" },
-          { text: "Info Vaksin", callback_data: "vaksin" },
+  bot.telegram.sendMessage(
+    ctx.chat.id,
+    "------------------MENU------------------",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "Laporan Mandiri", callback_data: "laporan_mandiri" }],
+          [
+            { text: "Vaksin", callback_data: "vaksin" },
+            { text: "Info", callback_data: "menu_info" },
+            { text: "Kasus", callback_data: "kasus" },
+          ],
+          [{ text: "Kontak", callback_data: "kontak" }],
         ],
-        [
-          { text: "Info Rumah Sakit", callback_data: "rs" },
-          { text: "Kasus Harian", callback_data: "kasus" },
-        ],
-        [
-          { text: "Kontak", callback_data: "kontak" },
-          { text: "Info Bot", callback_data: "info" },
-        ],
-      ],
-    },
-  });
+      },
+    }
+  );
+});
+
+bot.action("menu_info", (ctx) => {
+  bot.telegram.sendMessage(
+    ctx.chat.id,
+    "------------------INFO------------------",
+    {
+      reply_markup: {
+        inline_keyboard: [[{ text: "Info Rumah Sakit", callback_data: "rs" }]],
+      },
+    }
+  );
+});
+
+bot.action("rs", (ctx) => {
+  bot.telegram.sendMessage(ctx.chat.id, "INI MENU INFO RS");
 });
 
 bot.command("lapor", (context) => {
@@ -48,13 +66,7 @@ bot.command("lapor", (context) => {
     faculty: fakultas,
   };
 
-  const datas = `
-  Berhasil submit data :
-  Email     : ${payload.email}
-  Nama     : ${payload.name}
-  Nip      : ${payload.nip}
-  Fakultas : ${payload.faculty}
-  `;
+  const datas = `Laporan telah berhasil di submit.`;
   postDataLaporan(context, payload, datas);
 });
 
@@ -74,10 +86,29 @@ async function postDataLaporan(context, payload, datas) {
   }
 }
 
-bot.action("lapor", async (ctx) => {
+bot.action("laporan_mandiri", async (ctx) => {
   try {
-    const message = `lapor menggunakan command /lapor #NAMA #NIP #FAKULTAS`;
+    const message = `
+    Lapor menggunakan perintah :
+    /lapor  #EMAIL #NAMA #NIP #FAKULTAS`;
     bot.telegram.sendMessage(ctx.chat.id, message);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+bot.action("kasus", async (ctx) => {
+  try {
+    const response = await axios.get(`${url}/pegawai`);
+    const data = response.data.data;
+    let messages = "";
+    data.forEach((e, i) => {
+      messages = `${i}. ${e.name}`;
+    });
+    let str1 = `Data covid : `;
+    let str2 = str1.concat(messages);
+    bot.telegram.sendMessage(ctx.chat.id, str2);
+    console.log(data);
   } catch (error) {
     console.log(error);
   }
