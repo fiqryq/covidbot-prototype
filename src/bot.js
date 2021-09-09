@@ -21,11 +21,28 @@ bot.command("menu", (ctx) => {
         inline_keyboard: [
           [{ text: "Laporan Mandiri", callback_data: "laporan_mandiri" }],
           [
-            { text: "Vaksin", callback_data: "vaksin" },
+            { text: "Vaksin", callback_data: "menu_vaksin" },
             { text: "Info", callback_data: "menu_info" },
-            { text: "Kasus", callback_data: "kasus" },
+            { text: "Kasus", callback_data: "menu_kasus" },
           ],
           [{ text: "Kontak", callback_data: "kontak" }],
+        ],
+      },
+    }
+  );
+});
+
+bot.action("menu_vaksin", (ctx) => {
+  bot.telegram.sendMessage(
+    ctx.chat.id,
+    "------------------VAKSIN------------------",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "Lapor Vaksin", callback_data: "rs" },
+            { text: "Status Vaksin", callback_data: "rs" },
+          ],
         ],
       },
     }
@@ -39,6 +56,23 @@ bot.action("menu_info", (ctx) => {
     {
       reply_markup: {
         inline_keyboard: [[{ text: "Info Rumah Sakit", callback_data: "rs" }]],
+      },
+    }
+  );
+});
+
+bot.action("menu_kasus", (ctx) => {
+  bot.telegram.sendMessage(
+    ctx.chat.id,
+    "------------------KASUS------------------",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "Total Kasus", callback_data: "rs" },
+            { text: "Kasus Hari Ini", callback_data: "rs" },
+          ],
+        ],
       },
     }
   );
@@ -105,9 +139,11 @@ bot.action("kasus", async (ctx) => {
     data.forEach((e, i) => {
       messages = `${i}. ${e.name}`;
     });
+
     let str1 = `Data covid : `;
     let str2 = str1.concat(messages);
     bot.telegram.sendMessage(ctx.chat.id, str2);
+
     console.log(data);
   } catch (error) {
     console.log(error);
