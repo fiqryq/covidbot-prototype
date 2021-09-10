@@ -1,6 +1,8 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
+const moment = require("moment");
 const axios = require("axios");
+
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 const url = process.env.DEV_URL;
 
@@ -69,8 +71,8 @@ bot.action("menu_kasus", (ctx) => {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "Total Kasus", callback_data: "rs" },
-            { text: "Kasus Hari Ini", callback_data: "rs" },
+            { text: "Total Kasus", callback_data: "total_case" },
+            { text: "Kasus Hari Ini", callback_data: "today_case" },
           ],
         ],
       },
@@ -92,27 +94,36 @@ bot.command("lapor", (context) => {
   let nama = split[2];
   let nip = split[3];
   let fakultas = split[4];
+  let date = moment().format();
 
   const payload = {
     email: email,
     name: nama,
     nip: nip,
     faculty: fakultas,
+    created_date: date,
   };
 
-  const datas = `Laporan telah berhasil di submit.`;
-  postDataLaporan(context, payload, datas);
+  if (split.length != 5) {
+    console.log(payload);
+    bot.telegram.sendMessage(context.chat.id, "Format salah");
+  } else {
+    console.log(payload);
+    const message = `Laporan telah berhasil di submit.`;
+    postDataLaporan(context, payload, message);
+  }
 });
 
-async function postDataLaporan(context, payload, datas) {
+async function postDataLaporan(context, payload, message) {
   try {
     await axios
       .post(`${url}/pegawai`, payload)
       .then(function (response) {
         console.log(response);
-        bot.telegram.sendMessage(context.chat.id, datas);
+        bot.telegram.sendMessage(context.chat.id, message);
       })
       .catch(function (error) {
+        bot.telegram.sendMessage(context.chat.id, "gagal submit data");
         console.log(error);
       });
   } catch (error) {
@@ -123,28 +134,35 @@ async function postDataLaporan(context, payload, datas) {
 bot.action("laporan_mandiri", async (ctx) => {
   try {
     const message = `
-    Lapor menggunakan perintah :
-    /lapor  #EMAIL #NAMA #NIP #FAKULTAS`;
+    Lapor menggunakan perintah : \n\r/lapor  #EMAIL #NAMA #NIP #FAKULTAS \n\r\n\r Contoh :\n\r#fiqry@gmail.com #Fiqry ch #1999276 #FIT`;
     bot.telegram.sendMessage(ctx.chat.id, message);
   } catch (error) {
     console.log(error);
   }
 });
 
-bot.action("kasus", async (ctx) => {
+bot.action("today_case", async (ctx) => {
   try {
-    const response = await axios.get(`${url}/pegawai`);
+    const today = moment().format("LL");
+    const response = await axios.get(`${url}/casetoday`);
     const data = response.data.data;
-    let messages = "";
-    data.forEach((e, i) => {
-      messages = `${i}. ${e.name}`;
-    });
+    const names = data.map((e, i) => `${i + 1}. ${e.name} #${e.faculty}`);
+    const datanames = names.join("\r\n");
+    const body = `Data covid ${today} : \n${datanames}`;
+    bot.telegram.sendMessage(ctx.chat.id, body);
+  } catch (error) {
+    console.log(error);
+  }
+});
 
-    let str1 = `Data covid : `;
-    let str2 = str1.concat(messages);
-    bot.telegram.sendMessage(ctx.chat.id, str2);
-
-    console.log(data);
+bot.action("total_case", async (ctx) => {
+  try {
+    const response = await axios.get(`${url}/totalcase`);
+    const data = response.data.data;
+    const names = data.map((e, i) => `${i + 1}. ${e.name} #${e.faculty}`);
+    const datanames = names.join("\r\n");
+    const body = `Data covid ${today} : \n${datanames}`;
+    bot.telegram.sendMessage(ctx.chat.id, body);
   } catch (error) {
     console.log(error);
   }
