@@ -8,6 +8,7 @@ const url = process.env.DEV_URL;
 const national_vaccine = process.env.URL_VAKSIN_NASIONAL;
 
 const { numberFormat } = require("../utils/helper");
+
 // on start bot
 bot.start((ctx) =>
   ctx.reply(
@@ -29,7 +30,10 @@ bot.command("menu", (ctx) => {
             { text: "Info", callback_data: "menu_info" },
             { text: "Kasus", callback_data: "menu_kasus" },
           ],
-          [{ text: "Kontak", callback_data: "kontak" }],
+          [
+            { text: "Kontak", callback_data: "kontak" },
+            { text: "Tentang bot", callback_data: "about" },
+          ],
         ],
       },
     }
@@ -92,6 +96,29 @@ bot.action("menu_kasus", (ctx) => {
 
 bot.action("rs", (ctx) => {
   bot.telegram.sendMessage(ctx.chat.id, "INI MENU INFO RS");
+});
+
+bot.action("about", (ctx) => {
+  const data = [
+    {
+      id: 1,
+      name: "Cekdiri.id",
+    },
+    {
+      id: 2,
+      name: "SIRANAP V 3.0",
+    },
+  ];
+  const body = data.map((e, i) => `${i + 1}. ${e.name}`);
+  const payload = body.join(`\n\r`);
+  bot.telegram.sendMessage(
+    ctx.chat.id,
+    `bot dikembangkan oleh : xxxx\n\rsumber data :\n${payload}`
+  );
+});
+
+bot.action("kontak", (ctx) => {
+  bot.telegram.sendMessage(ctx.chat.id, "INFO : 08122XXXXX");
 });
 
 bot.action("vaksin_nasional", async (ctx) => {
