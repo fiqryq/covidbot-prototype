@@ -10,6 +10,7 @@ const url = process.env.DEV_URL;
 const national_vaccine = process.env.URL_VAKSIN_NASIONAL;
 const province = process.env.URL_PROVINCE;
 const cities = process.env.URL_CITIES;
+const bed = process.env.URL_BED;
 
 // Helper
 const { numberFormat } = require("../utils/helper");
@@ -70,7 +71,7 @@ bot.action("menu_info", (ctx) => {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "Info Rumah Sakit", callback_data: "rs" },
+            { text: "Info Rumah Sakit", callback_data: "info_rs" },
             {
               text: "Status Vaksin Nasional",
               callback_data: "vaksin_nasional",
@@ -99,9 +100,36 @@ bot.action("menu_kasus", (ctx) => {
   );
 });
 
-bot.action("rs", (ctx) => {
-  const message = `TEST`;
+bot.action("info_rs", (ctx) => {
+  const message = `mencari rumah sakit :\n\r/rs #ID_PROVINSI #ID_KOTA\n\r\n\rlist provinsi : /list_provinsi\n\rcari kota : /kota #ID_PROVINSI`;
   bot.telegram.sendMessage(ctx.chat.id, message);
+});
+
+bot.command("/rs", async (ctx) => {
+  try {
+    // provinceid=51prop&cityid=5171&type=1
+    const get_command = ctx.message.text;
+    const split_command = get_command.split("#");
+    let prov_id = split_command[1];
+    let city_id = split_command[2];
+    let comand = "prop";
+    let new_prov_id = prov_id.concat(comand);
+    let joinstr = new_prov_id.replace(/\s+/g, "");
+    const response = await axios.get(
+      `${bed}provinceid=${joinstr}&cityid=${city_id}&type=1`
+    );
+    const data = response.data.hospitals;
+    const data_rs = data.map(
+      (e, i) =>
+        `${i + 1}. ${e.name}\n\ralamat : ${e.address}\n\rtelp : ${
+          e.phone
+        }\n\rruangan tersedia : ${e.bed_availability}\n\rupdate : ${e.info}`
+    );
+    const message = data_rs.join(`\n\r\n\r`);
+    bot.telegram.sendMessage(ctx.chat.id, message);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 bot.command("/kota", async (ctx) => {
@@ -111,12 +139,17 @@ bot.command("/kota", async (ctx) => {
     let get_prov_id = split_command[1];
     let cmd_param = "prop";
     let id_parameter = get_prov_id.concat(cmd_param);
-    const kota = await axios.get(`${cities}${id_parameter}`);
+    let joinstr = id_parameter.replace(/\s+/g, "");
+    const kota = await axios.get(`${cities}${joinstr}`);
     const data_kota = kota.data.cities;
     const data = data_kota.map((e, i) => `${i + 1}. ${e.name}`);
     const kota_names = data.join(`\n\r`);
     const message = `LIST KOTA : \n\r${kota_names}`;
-    bot.telegram.sendMessage(ctx.chat.id, message);
+    if (data_kota.length > 0) {
+      bot.telegram.sendMessage(ctx.chat.id, message);
+    } else {
+      bot.telegram.sendMessage(ctx.chat.id, "kota tidak ditemukan");
+    }
   } catch (error) {
     console.log(error);
   }
