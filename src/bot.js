@@ -1,12 +1,17 @@
 require("dotenv").config();
+// package
 const { Telegraf } = require("telegraf");
 const moment = require("moment");
 const axios = require("axios");
 
+// Enviroment variable
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 const url = process.env.DEV_URL;
 const national_vaccine = process.env.URL_VAKSIN_NASIONAL;
+const province = process.env.URL_PROVINCE;
+const cities = process.env.URL_CITIES;
 
+// Helper
 const { numberFormat } = require("../utils/helper");
 
 // on start bot
@@ -95,7 +100,43 @@ bot.action("menu_kasus", (ctx) => {
 });
 
 bot.action("rs", (ctx) => {
-  bot.telegram.sendMessage(ctx.chat.id, "INI MENU INFO RS");
+  const message = `TEST`;
+  bot.telegram.sendMessage(ctx.chat.id, message);
+});
+
+bot.command("/kota", async (ctx) => {
+  try {
+    const get_command = ctx.message.text;
+    const split_command = get_command.split("#");
+    let get_prov_id = split_command[1];
+    let cmd_param = "prop";
+    let id_parameter = get_prov_id.concat(cmd_param);
+    const kota = await axios.get(`${cities}${id_parameter}`);
+    const data_kota = kota.data.cities;
+    const data = data_kota.map((e, i) => `${i + 1}. ${e.name}`);
+    const kota_names = data.join(`\n\r`);
+    const message = `LIST KOTA : \n\r${kota_names}`;
+    bot.telegram.sendMessage(ctx.chat.id, message);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+bot.command("/list_provinsi", async (ctx) => {
+  try {
+    const prov = await axios.get(`${province}`);
+    const data_prov = prov.data.provinces;
+    const data = data_prov.map((e, i) => {
+      let id = e.id;
+      let newid = id.replace(/prop/g, "");
+      return `${i + 1}. ${e.name} : ${newid}`;
+    });
+    const prov_names = data.join(`\n\r`);
+    const message = `LIST ID PROVINSI : \n\r\n${prov_names}`;
+    bot.telegram.sendMessage(ctx.chat.id, message);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 bot.action("about", (ctx) => {
@@ -210,7 +251,6 @@ bot.command("lapor", (context) => {
     console.log(payload);
     bot.telegram.sendMessage(context.chat.id, "Format salah");
   } else {
-    console.log(payload);
     const message = `Laporan telah berhasil di submit.`;
     postDataLaporan(context, payload, message);
   }
@@ -261,17 +301,23 @@ bot.action("today_case", async (ctx) => {
   }
 });
 
-// bot.action("total_case", async (ctx) => {
-//   try {
-//     const response = await axios.get(`${url}/totalcase`);
-//     const data = response.data.data;
-//     const names = data.map((e, i) => `${i + 1}. ${e.name} #${e.faculty}`);
-//     const datanames = names.join("\r\n");
-//     const body = `Data covid ${today} : \n${datanames}`;
-//     bot.telegram.sendMessage(ctx.chat.id, body);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
+bot.action("total_case", async (ctx) => {
+  try {
+    const response = await axios.get(`${url}/totalcase`);
+    const data = response.data.data;
+    // Filter Data
+    const FIT = data.filter((e) => e.faculty === "FIT");
+    const FKB = data.filter((e) => e.faculty === "FKB");
+    const FRI = data.filter((e) => e.faculty === "FRI");
+    const FTE = data.filter((e) => e.faculty === "FTE");
+    const FIF = data.filter((e) => e.faculty === "FIF");
+    const FIK = data.filter((e) => e.faculty === "FIK");
+    const FEB = data.filter((e) => e.faculty === "FEB");
+    const message = `Total Kasus : \n\rFIT : ${FIT.length} Kasus\r\n\FKB : ${FKB.length} Kasus\r\n\FRI : ${FRI.length} Kasus\r\n\FTE : ${FTE.length} Kasus\r\n\FIF : ${FIF.length} Kasus\r\n\FIK : ${FIK.length} Kasus\r\n\FEB : ${FEB.length} Kasus`;
+    bot.telegram.sendMessage(ctx.chat.id, message);
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 bot.launch();
