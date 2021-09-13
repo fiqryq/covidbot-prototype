@@ -53,10 +53,7 @@ bot.action("menu_vaksin", (ctx) => {
     {
       reply_markup: {
         inline_keyboard: [
-          [
-            { text: "Lapor Vaksin", callback_data: "rs" },
-            { text: "Status Vaksin", callback_data: "rs" },
-          ],
+          [{ text: "Lapor Vaksin", callback_data: "info_vaksin" }],
         ],
       },
     }
@@ -107,7 +104,6 @@ bot.action("info_rs", (ctx) => {
 
 bot.command("/rs", async (ctx) => {
   try {
-    // provinceid=51prop&cityid=5171&type=1
     const get_command = ctx.message.text;
     const split_command = get_command.split("#");
     let prov_id = split_command[1];
@@ -306,10 +302,14 @@ async function postDataLaporan(context, payload, message) {
   }
 }
 
-bot.command("vaksin", (ctx) => {
+bot.action("info_vaksin", (ctx) => {
+  const message = `Lapor menggunakan perintah :\n\r#EMAIL #NAMA #NIP #FAKULTAS #DOSIS_KE #TEMPAT_VAKSIN\n\r\n\rccontoh \n\r/vaksin #fqiry@gmail.com #aryo #982989 #FIT #1 #Telkom`;
+  bot.telegram.sendMessage(ctx.chat.id, message);
+});
+
+bot.command("/vaksin", (ctx) => {
   let get_command = ctx.message.text;
   let msg_to_array = get_command.split("#");
-
   let email = msg_to_array[1];
   let name = msg_to_array[2];
   let nip = msg_to_array[3];
