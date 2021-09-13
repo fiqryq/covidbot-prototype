@@ -142,7 +142,7 @@ bot.command("/kota", async (ctx) => {
     let joinstr = id_parameter.replace(/\s+/g, "");
     const kota = await axios.get(`${cities}${joinstr}`);
     const data_kota = kota.data.cities;
-    const data = data_kota.map((e, i) => `${i + 1}. ${e.name}`);
+    const data = data_kota.map((e, i) => `${i + 1}. ${e.name} #${e.id}`);
     const kota_names = data.join(`\n\r`);
     const message = `LIST KOTA : \n\r${kota_names}`;
     if (data_kota.length > 0) {
@@ -299,6 +299,53 @@ async function postDataLaporan(context, payload, message) {
       })
       .catch(function (error) {
         bot.telegram.sendMessage(context.chat.id, "gagal submit data");
+        console.log(error);
+      });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+bot.command("vaksin", (ctx) => {
+  let get_command = ctx.message.text;
+  let msg_to_array = get_command.split("#");
+
+  let email = msg_to_array[1];
+  let name = msg_to_array[2];
+  let nip = msg_to_array[3];
+  let faculty = msg_to_array[4];
+  let dosis = msg_to_array[5];
+  let place = msg_to_array[6];
+  let date = moment().format();
+
+  const payload = {
+    email: email,
+    name: name,
+    nip: nip,
+    faculty: faculty,
+    dosis: dosis,
+    tempat_vaksin: place,
+    created_date: date,
+  };
+  console.log(msg_to_array.length);
+  if (msg_to_array.length != 7) {
+    bot.telegram.sendMessage(ctx.chat.id, "Format salah");
+  } else {
+    postDataVaksin(ctx, payload);
+  }
+});
+
+async function postDataVaksin(ctx, payload) {
+  try {
+    await axios
+      .post(`${url}/vaksin`, payload)
+      .then(function (response) {
+        console.log(response);
+        const message = `Berhasil lapor vaksin`;
+        bot.telegram.sendMessage(ctx.chat.id, message);
+      })
+      .catch(function (error) {
+        bot.telegram.sendMessage(ctx.chat.id, "gagal submit data");
         console.log(error);
       });
   } catch (error) {
